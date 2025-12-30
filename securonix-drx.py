@@ -2948,7 +2948,7 @@ def return_outputs(readable_output, outputs=None, raw_response=None, **kwargs):
     elif outputs is not None:
         print(outputs)
  
- @task(log_prints=True)       
+@task(log_prints=True)       
 def validate_configuration_parameters(params: dict[str, Any]):
     """
     Check whether entered configuration parameters are valid or not.
