@@ -3621,7 +3621,6 @@ def main(integration_id: int = None, command: str = None) -> None:
     # Create a state mapping from XSOAR to Securonix.
 #    create_xsoar_to_securonix_state_mapping(params)
 
-    command = "fetch-incidents"
     print(f"Command being called in Securonix is: {command}")
 
     try:
