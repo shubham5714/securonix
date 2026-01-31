@@ -3454,7 +3454,7 @@ def get_supabase_params(integration_id: int) -> dict:
 
         # Fetch / incident behavior
         "fetch_time": "24 hour",
-        "max_fetch": 200,
+        "max_fetch": 2,
         "incident_status": "opened",
         "default_severity": "Medium",
         "close_incident": False,
