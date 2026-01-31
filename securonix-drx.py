@@ -2009,7 +2009,7 @@ class Client(BaseClient):
         return violation_data
 
     def list_incidents_request(
-        self, from_epoch: str, to_epoch: str, incident_status: str, max_incidents: str = "200", offset: str = "0", status: str = None
+        self, from_epoch: str, to_epoch: str, incident_status: str, max_incidents: str = "200", offset: str = "0"
     ) -> dict:
         """List all incidents by sending a GET request.
 
@@ -2019,7 +2019,6 @@ class Client(BaseClient):
             incident_status: incident status e.g:closed, opened
             max_incidents: max incidents to get
             offset: offset to be used
-            status: status parameter for filtering
 
         Returns:
             Response from API.
@@ -2034,8 +2033,6 @@ class Client(BaseClient):
             "order": "asc",
             "offset": offset,
         }
-        if status:
-            params["status"] = status
         incidents = self.http_request("GET", "/incident/get", headers=headers, params=params)
         return incidents.get("result").get("data")
 
@@ -2976,7 +2973,7 @@ def validate_configuration_parameters(params: dict[str, Any]):
     arg_to_datetime(fetch_time, "First fetch time")
 
 def list_incidents_request(
-        self, from_epoch: str, to_epoch: str, incident_status: str, max_incidents: str = "200", offset: str = "0", status: str = None
+        self, from_epoch: str, to_epoch: str, incident_status: str, max_incidents: str = "200", offset: str = "0"
     ) -> dict:
         """List all incidents by sending a GET request.
 
@@ -2986,7 +2983,6 @@ def list_incidents_request(
             incident_status: incident status e.g:closed, opened
             max_incidents: max incidents to get
             offset: offset to be used
-            status: status parameter for filtering
 
         Returns:
             Response from API.
@@ -3001,8 +2997,6 @@ def list_incidents_request(
             "order": "asc",
             "offset": offset,
         }
-        if status:
-            params["status"] = status
         incidents = self.http_request("GET", "/incident/get", headers=headers, params=params)
         return incidents.get("result").get("data")
 
@@ -3115,7 +3109,7 @@ def list_violation_data(client: Client, args) -> list:
             f"Error from Securonix is: {violation_data.get('errorMessage')}"
         )
     violation_events = violation_data.get("events")
-    if violation_events and len(violation_events) > 0:  # type: ignore[arg-type]
+    if len(violation_events) > 0:  # type: ignore[arg-type]
         violation_readables, violation_outputs = parse_data_arr(violation_events)
         headers = ["EventID", "Eventtime", "Message", "Policyname", "Accountname"]
         human_readable = tableToMarkdown(
@@ -3164,43 +3158,7 @@ def run_polling_command(client, args: dict, command_name: str, search_function: 
     command_results = []
     result = search_function(client, args)
     command_results.append(result)
-    outputs = []  # Initialize outputs to empty list as default
-    
-    # Handle case where result might be a string, None, or not a list
-    if result is None:
-        return result
-    
-    if not isinstance(result, list):
-        # If result is not a list (e.g., it's a string or dict), return early
-        return result
-    
-    if len(result) == 0:
-        return result
-    
-    # Handle case where result[0] might be a string (e.g., "There are no violation events.")
-    try:
-        if not isinstance(result[0], dict):
-            # If result[0] is not a dict (e.g., it's a string), return early
-            return result
-        
-        if "raw_response" not in result[0]:
-            # If result[0] doesn't have raw_response key, return early
-            return result
-        
-        # Safely get events with default empty list
-        raw_response = result[0].get("raw_response", {})
-        if not isinstance(raw_response, dict):
-            return result
-        
-        outputs = raw_response.get("events", [])
-        if not isinstance(outputs, list):
-            outputs = []
-    except (TypeError, KeyError, IndexError) as e:
-        # If we get any error accessing result[0] or its contents, return the result as-is
-        # This handles cases where result structure is unexpected
-        print(f"Warning: Error accessing result structure in run_polling_command: {e}")
-        print(f"Result type: {type(result)}, Result value: {result}")
-        return result
+    outputs = result[0]["raw_response"].get("events")
     delay_type = client.get_securonix_retry_delay_type()
     retry_count: int = client.get_securonix_retry_count()
     retry_delay: int = client.get_securonix_retry_delay()
@@ -3216,7 +3174,7 @@ def run_polling_command(client, args: dict, command_name: str, search_function: 
         scheduled_command = ScheduledCommand(
             command=command_name, next_run_in_seconds=retry_delay, args=polling_args, timeout_in_seconds=retry_timeout
         )
-        command_results.append(scheduled_command)
+        command_results.append(scheduled_command=scheduled_command)
         return command_results
     return result
 
@@ -3278,14 +3236,12 @@ def fetch_securonix_incident(
     if incident_status.lower() == "all":
         incident_status = "updated"
 
-    status = params.get("status", "")
     securonix_incidents = client.list_incidents_request(
         from_epoch=str(from_epoch),
         to_epoch=str(to_epoch),
         incident_status=incident_status,
         max_incidents=max_fetch,
         offset=str(offset),
-        status=status if status else None,
     )
 
     if securonix_incidents:
@@ -3371,21 +3327,11 @@ def fetch_securonix_incident(
                 incident['violations'] = raw_events
 
                 #print(incident)
-                incident_row =      {
+                incident_row = {
                     "name": incident_name,
-                    "occurred_at": timestamp_to_datestring(incident.get("lastUpdateDate")),
-                    "severity": incident.get("priority"),
-                    "rawJSON": json.dumps(incident),
-                    "alert_id": incident_id,
-                    "raw_events": json.dumps(raw_events),
-                    "ai_message": "test",
-                    "instance_name": "Astra-Securonix",
-                    "tenant_id": "d1708ffc-397e-43b6-8f0a-49306dcfc35d",
-                    "tenant_name": "Astra",
-                    "classifier": "test",
-                    "mapper": "test",
                     "type": "securonix",
-                    "alert_source": "/assets/images/brand-logos/securonix-logo.png",
+                    "occurred_at": timestamp_to_datestring(incident.get("lastUpdateDate")),
+                    "rawJSON": json.dumps(incident),
                 }
                 print(incident_row)
                 
@@ -3397,16 +3343,6 @@ def fetch_securonix_incident(
                         "occurred": timestamp_to_datestring(incident.get("lastUpdateDate")),
                         "severity": incident.get("priority"),
                         "rawJSON": json.dumps(incident),
-                        "alert_id": "",
-                        "raw_events": "",
-                        "ai_message": "",
-                        "instance_name": "",
-                        "tenant_id": "",
-                        "tenant_name": "",
-                        "classifier": "",
-                        "mapper": "",
-                        "incident_type": "",
-                        "logo": "",
                     }
                 )
 
@@ -3518,9 +3454,8 @@ def get_supabase_params(integration_id: int) -> dict:
 
         # Fetch / incident behavior
         "fetch_time": "24 hour",
-        "max_fetch": 5,
+        "max_fetch": 200,
         "incident_status": "opened",
-        "status": "OPEN",
         "default_severity": "Medium",
         "close_incident": False,
 
@@ -3528,9 +3463,6 @@ def get_supabase_params(integration_id: int) -> dict:
         "close_states_of_securonix": "",
         "entity_type_to_fetch": "Incident",
         "isFetch": True,
-
-        # DRX
-        "drx_enabled": "",
     }
         
         print("Successfully mapped parameters from Supabase")
@@ -3612,7 +3544,7 @@ def insert_incident_row_in_supabase(incident: dict) -> None:
         supabase = get_supabase_client()
         response = (
             supabase
-            .table("tickets")
+            .table("dev_tickets")
             .insert(incident)   # single row, no list needed
             .execute()
         )
@@ -3772,7 +3704,7 @@ def main(integration_id: int = None, command: str = None) -> None:
 if __name__ in ["__main__", "builtin", "builtins"]:
     try:
         integration_id = 2  # Change this to your integration ID
-        command = "test-module"  # Change this to "fetch-incidents" or "test-module"
+        command = "fetch-incidents"  # Change this to "fetch-incidents" or "test-module"
         
         main(integration_id=integration_id, command=command)
     except Exception as e:
