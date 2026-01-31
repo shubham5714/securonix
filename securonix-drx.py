@@ -11,7 +11,6 @@ import urllib3
 from dateutil.parser import parse
 from prefect import flow, task 
 
-import os
 import re
 import ssl
 import requests
@@ -3327,11 +3326,21 @@ def fetch_securonix_incident(
                 incident['violations'] = raw_events
 
                 #print(incident)
-                incident_row = {
+                incident_row =      {
                     "name": incident_name,
-                    "type": "securonix",
                     "occurred_at": timestamp_to_datestring(incident.get("lastUpdateDate")),
+                    "severity": incident.get("priority"),
                     "rawJSON": json.dumps(incident),
+                    "alert_id": incident_id,
+                    "raw_events": json.dumps(raw_events),
+                    "ai_message": "test",
+                    "instance_name": "Astra-Securonix",
+                    "tenant_id": "d1708ffc-397e-43b6-8f0a-49306dcfc35d",
+                    "tenant_name": "Astra",
+                    "classifier": "test",
+                    "mapper": "test",
+                    "type": "securonix",
+                    "alert_source": "/assets/images/brand-logos/securonix-logo.png",
                 }
                 print(incident_row)
                 
@@ -3343,6 +3352,16 @@ def fetch_securonix_incident(
                         "occurred": timestamp_to_datestring(incident.get("lastUpdateDate")),
                         "severity": incident.get("priority"),
                         "rawJSON": json.dumps(incident),
+                        "alert_id": "",
+                        "raw_events": "",
+                        "ai_message": "",
+                        "instance_name": "",
+                        "tenant_id": "",
+                        "tenant_name": "",
+                        "classifier": "",
+                        "mapper": "",
+                        "incident_type": "",
+                        "logo": "",
                     }
                 )
 
@@ -3454,8 +3473,8 @@ def get_supabase_params(integration_id: int) -> dict:
 
         # Fetch / incident behavior
         "fetch_time": "24 hour",
-        "max_fetch": 200,
-        "incident_status": "opened",
+        "max_fetch": 5,
+        "incident_status": "OPEN",
         "default_severity": "Medium",
         "close_incident": False,
 
@@ -3463,6 +3482,9 @@ def get_supabase_params(integration_id: int) -> dict:
         "close_states_of_securonix": "",
         "entity_type_to_fetch": "Incident",
         "isFetch": True,
+
+        # DRX
+        "drx_enabled": "",
     }
         
         print("Successfully mapped parameters from Supabase")
@@ -3704,7 +3726,7 @@ def main(integration_id: int = None, command: str = None) -> None:
 if __name__ in ["__main__", "builtin", "builtins"]:
     try:
         integration_id = 2  # Change this to your integration ID
-        command = "fetch-incidents"  # Change this to "fetch-incidents" or "test-module"
+        command = "test-module"  # Change this to "fetch-incidents" or "test-module"
         
         main(integration_id=integration_id, command=command)
     except Exception as e:
