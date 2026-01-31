@@ -3331,12 +3331,21 @@ def fetch_securonix_incident(
                 incident['totalViolations'] = total_violations               
                 incident['violations'] = raw_events
 
-                #print(incident)
-                incident_row = {
+                incident_row =  {
                     "name": incident_name,
-                    "type": "securonix",
                     "occurred_at": timestamp_to_datestring(incident.get("lastUpdateDate")),
+                    "severity": incident.get("priority"),
                     "rawJSON": json.dumps(incident),
+                    "alert_id": incident_id,
+                    "raw_events": json.dumps(raw_events),
+                    "ai_message": "test",
+                    "instance_name": "Astra-Securonix",
+                    "tenant_id": "d1708ffc-397e-43b6-8f0a-49306dcfc35d",
+                    "tenant_name": "Astra",
+                    "classifier": "test",
+                    "mapper": "test",
+                    "type": "securonix",
+                    "alert_source": "/assets/images/brand-logos/securonix-logo.png",
                 }
                 print(incident_row)
                 
@@ -3550,7 +3559,7 @@ def insert_incident_row_in_supabase(incident: dict) -> None:
         supabase = get_supabase_client()
         response = (
             supabase
-            .table("dev_tickets")
+            .table("tickets")
             .insert(incident)   # single row, no list needed
             .execute()
         )
