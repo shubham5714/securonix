@@ -3115,7 +3115,7 @@ def list_violation_data(client: Client, args) -> list:
             f"Error from Securonix is: {violation_data.get('errorMessage')}"
         )
     violation_events = violation_data.get("events")
-    if len(violation_events) > 0:  # type: ignore[arg-type]
+    if violation_events and len(violation_events) > 0:  # type: ignore[arg-type]
         violation_readables, violation_outputs = parse_data_arr(violation_events)
         headers = ["EventID", "Eventtime", "Message", "Policyname", "Accountname"]
         human_readable = tableToMarkdown(
@@ -3164,16 +3164,43 @@ def run_polling_command(client, args: dict, command_name: str, search_function: 
     command_results = []
     result = search_function(client, args)
     command_results.append(result)
+    outputs = []  # Initialize outputs to empty list as default
+    
+    # Handle case where result might be a string, None, or not a list
+    if result is None:
+        return result
+    
+    if not isinstance(result, list):
+        # If result is not a list (e.g., it's a string or dict), return early
+        return result
+    
+    if len(result) == 0:
+        return result
     
     # Handle case where result[0] might be a string (e.g., "There are no violation events.")
-    if not isinstance(result, list) or len(result) == 0:
+    try:
+        if not isinstance(result[0], dict):
+            # If result[0] is not a dict (e.g., it's a string), return early
+            return result
+        
+        if "raw_response" not in result[0]:
+            # If result[0] doesn't have raw_response key, return early
+            return result
+        
+        # Safely get events with default empty list
+        raw_response = result[0].get("raw_response", {})
+        if not isinstance(raw_response, dict):
+            return result
+        
+        outputs = raw_response.get("events", [])
+        if not isinstance(outputs, list):
+            outputs = []
+    except (TypeError, KeyError, IndexError) as e:
+        # If we get any error accessing result[0] or its contents, return the result as-is
+        # This handles cases where result structure is unexpected
+        print(f"Warning: Error accessing result structure in run_polling_command: {e}")
+        print(f"Result type: {type(result)}, Result value: {result}")
         return result
-    
-    if not isinstance(result[0], dict) or "raw_response" not in result[0]:
-        # If result[0] is not a dict with raw_response, return early
-        return result
-    
-    outputs = result[0]["raw_response"].get("events", [])
     delay_type = client.get_securonix_retry_delay_type()
     retry_count: int = client.get_securonix_retry_count()
     retry_delay: int = client.get_securonix_retry_delay()
