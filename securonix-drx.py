@@ -3164,7 +3164,16 @@ def run_polling_command(client, args: dict, command_name: str, search_function: 
     command_results = []
     result = search_function(client, args)
     command_results.append(result)
-    outputs = result[0]["raw_response"].get("events")
+    
+    # Handle case where result[0] might be a string (e.g., "There are no violation events.")
+    if not isinstance(result, list) or len(result) == 0:
+        return result
+    
+    if not isinstance(result[0], dict) or "raw_response" not in result[0]:
+        # If result[0] is not a dict with raw_response, return early
+        return result
+    
+    outputs = result[0]["raw_response"].get("events", [])
     delay_type = client.get_securonix_retry_delay_type()
     retry_count: int = client.get_securonix_retry_count()
     retry_delay: int = client.get_securonix_retry_delay()
@@ -3180,7 +3189,7 @@ def run_polling_command(client, args: dict, command_name: str, search_function: 
         scheduled_command = ScheduledCommand(
             command=command_name, next_run_in_seconds=retry_delay, args=polling_args, timeout_in_seconds=retry_timeout
         )
-        command_results.append(scheduled_command=scheduled_command)
+        command_results.append(scheduled_command)
         return command_results
     return result
 
