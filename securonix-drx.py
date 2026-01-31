@@ -11,6 +11,7 @@ import urllib3
 from dateutil.parser import parse
 from prefect import flow, task 
 
+import os
 import re
 import ssl
 import requests
