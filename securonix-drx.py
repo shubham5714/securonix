@@ -2009,7 +2009,7 @@ class Client(BaseClient):
         return violation_data
 
     def list_incidents_request(
-        self, from_epoch: str, to_epoch: str, incident_status: str, max_incidents: str = "200", offset: str = "0"
+        self, from_epoch: str, to_epoch: str, incident_status: str, max_incidents: str = "200", offset: str = "0", status: str = ""
     ) -> dict:
         """List all incidents by sending a GET request.
 
@@ -2019,6 +2019,7 @@ class Client(BaseClient):
             incident_status: incident status e.g:closed, opened
             max_incidents: max incidents to get
             offset: offset to be used
+            status: status parameter for the request
 
         Returns:
             Response from API.
@@ -2033,6 +2034,8 @@ class Client(BaseClient):
             "order": "asc",
             "offset": offset,
         }
+        if status:
+            params["status"] = status
         incidents = self.http_request("GET", "/incident/get", headers=headers, params=params)
         return incidents.get("result").get("data")
 
@@ -3236,12 +3239,14 @@ def fetch_securonix_incident(
     if incident_status.lower() == "all":
         incident_status = "updated"
 
+    status = params.get("status", "")
     securonix_incidents = client.list_incidents_request(
         from_epoch=str(from_epoch),
         to_epoch=str(to_epoch),
         incident_status=incident_status,
         max_incidents=max_fetch,
         offset=str(offset),
+        status=status,
     )
 
     if securonix_incidents:
@@ -3456,6 +3461,7 @@ def get_supabase_params(integration_id: int) -> dict:
         "fetch_time": "24 hour",
         "max_fetch": 2,
         "incident_status": "opened",
+        "status": "OPEN",
         "default_severity": "Medium",
         "close_incident": False,
 
