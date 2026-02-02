@@ -11,7 +11,6 @@ import urllib3
 from dateutil.parser import parse
 from prefect import flow, task 
 
-import os
 import re
 import ssl
 import requests
@@ -163,6 +162,7 @@ def reformat_outputs(text: str) -> str:
         text = text[2:]
     return "".join(" " + char if char.isupper() else char.strip() for char in text).strip().title()
 
+
 @task(log_prints=True)
 def remove_empty_elements(d):
     """
@@ -182,6 +182,7 @@ def remove_empty_elements(d):
         return [v for v in (remove_empty_elements(v) for v in d) if not empty(v)]
     else:
         return {k: v for k, v in ((k, remove_empty_elements(v)) for k, v in d.items()) if not empty(v)}
+
 
 @task(log_prints=True)
 def formatCell(data, is_pretty=True, json_transform=None):
@@ -229,6 +230,7 @@ def create_clickable_url(url, text=None):
             return ['[{}]({})'.format(text, item) for text, item in zip(text, url)]
         return ['[{}]({})'.format(item, item) for item in url]
     return '[{}]({})'.format(text or url, url)
+
 
 @task(log_prints=True)
 def url_to_clickable_markdown(data, url_keys):
@@ -681,8 +683,8 @@ def set_integration_context(context: dict):
 
     _INTEGRATION_CONTEXT.update(context)
     print(_INTEGRATION_CONTEXT)
-
-@task(log_prints=True)    
+    
+@task(log_prints=True)
 def get_integration_context():
     """
     Get integration context.
@@ -938,6 +940,7 @@ class ExecutionMetrics(object):
                     self._metrics.append({'Type': metric_type, 'APICallsCount': metric_value})
             self.metrics = CommandResults(execution_metrics=self._metrics)
 
+
 @task(log_prints=True)
 def is_time_sensitive():
     """
@@ -949,6 +952,7 @@ def is_time_sensitive():
     """
     return False
 
+
 @task(log_prints=True)
 def get_integration_name():
     """
@@ -957,6 +961,7 @@ def get_integration_name():
     :rtype: ``str``
     """
     return "securonix"
+
 
 @task(log_prints=True)
 def skip_proxy():
@@ -2009,7 +2014,7 @@ class Client(BaseClient):
         return violation_data
 
     def list_incidents_request(
-        self, from_epoch: str, to_epoch: str, incident_status: str, max_incidents: str = "200", offset: str = "0", status: str = ""
+        self, from_epoch: str, to_epoch: str, incident_status: str, max_incidents: str = "200", offset: str = "0"
     ) -> dict:
         """List all incidents by sending a GET request.
 
@@ -2019,7 +2024,6 @@ class Client(BaseClient):
             incident_status: incident status e.g:closed, opened
             max_incidents: max incidents to get
             offset: offset to be used
-            status: status parameter for the request
 
         Returns:
             Response from API.
@@ -2034,8 +2038,6 @@ class Client(BaseClient):
             "order": "asc",
             "offset": offset,
         }
-        if status:
-            params["status"] = status
         incidents = self.http_request("GET", "/incident/get", headers=headers, params=params)
         return incidents.get("result").get("data")
 
@@ -2603,6 +2605,7 @@ class Client(BaseClient):
         )
         return response
 
+
 @task(log_prints=True)
 def remove_nulls_from_dictionary(data):
     """
@@ -2635,6 +2638,7 @@ def encode_string_results(text):
         return str(text)
     except UnicodeEncodeError:
         return text.encode("utf8", "replace")
+
 
 @task(log_prints=True)
 def arg_to_number(arg, arg_name=None, required=False):
@@ -2692,6 +2696,7 @@ def arg_to_number(arg, arg_name=None, required=False):
         raise ValueError('Invalid number: "{}"="{}"'.format(arg_name, arg))
     else:
         raise ValueError('"{}" is not a valid number'.format(arg))
+
 
 @task(log_prints=True)
 def argToBoolean(value):
@@ -2932,13 +2937,14 @@ def arg_to_datetime(arg, arg_name=None, is_utc=True, required=False, settings=No
     else:
         raise ValueError('"{}" is not a valid date'.format(arg))
 
+
 @task(log_prints=True)
 def return_error(message):
     print(f"ERROR: {message}")
     traceback.print_exc()
     sys.exit(1)
- 
-@task(log_prints=True)    
+    
+@task(log_prints=True)
 def return_results(results):
     if results is not None:
         print(results)
@@ -2951,8 +2957,8 @@ def return_outputs(readable_output, outputs=None, raw_response=None, **kwargs):
         print(raw_response)
     elif outputs is not None:
         print(outputs)
- 
-@task(log_prints=True)       
+        
+@task(log_prints=True)
 def validate_configuration_parameters(params: dict[str, Any]):
     """
     Check whether entered configuration parameters are valid or not.
@@ -3144,6 +3150,7 @@ def list_violation_data(client: Client, args) -> list:
     else:
         return ["There are no violation events."]
 
+
 @task(log_prints=True)
 def run_polling_command(client, args: dict, command_name: str, search_function: Callable):
     """
@@ -3161,7 +3168,14 @@ def run_polling_command(client, args: dict, command_name: str, search_function: 
     command_results = []
     result = search_function(client, args)
     command_results.append(result)
-    outputs = result[0]["raw_response"].get("events")
+    
+    # Check if result[0] is a dictionary (has events) or a string (no events)
+    if isinstance(result[0], dict) and "raw_response" in result[0]:
+        outputs = result[0]["raw_response"].get("events", [])
+    else:
+        # No events found, result[0] is likely a string like "There are no violation events."
+        outputs = []
+    
     delay_type = client.get_securonix_retry_delay_type()
     retry_count: int = client.get_securonix_retry_count()
     retry_delay: int = client.get_securonix_retry_delay()
@@ -3177,9 +3191,10 @@ def run_polling_command(client, args: dict, command_name: str, search_function: 
         scheduled_command = ScheduledCommand(
             command=command_name, next_run_in_seconds=retry_delay, args=polling_args, timeout_in_seconds=retry_timeout
         )
-        command_results.append(scheduled_command=scheduled_command)
+        command_results.append(scheduled_command)
         return command_results
     return result
+
 
 @task(log_prints=True)
 def fetch_securonix_incident(
@@ -3239,14 +3254,12 @@ def fetch_securonix_incident(
     if incident_status.lower() == "all":
         incident_status = "updated"
 
-    status = params.get("status", "")
     securonix_incidents = client.list_incidents_request(
         from_epoch=str(from_epoch),
         to_epoch=str(to_epoch),
         incident_status=incident_status,
         max_incidents=max_fetch,
         offset=str(offset),
-        status=status,
     )
 
     if securonix_incidents:
@@ -3324,21 +3337,37 @@ def fetch_securonix_incident(
                     command_name="securonix-list-violation-data",
                 )
                 
-                raw_events = events[0]['outputs']
-                #print(raw_events)
-                total_violations = events[0]['raw_response']['totalDocuments']
-                #print(total_violations)
+                # Check if events[0] is a dictionary (has data) or a string (no events)
+                if isinstance(events[0], dict) and 'outputs' in events[0]:
+                    raw_events = events[0]['outputs']
+                    #print(raw_events)
+                    total_violations = events[0]['raw_response'].get('totalDocuments', 0)
+                    #print(total_violations)
+                else:
+                    # No events found
+                    raw_events = []
+                    total_violations = 0
+                
                 incident['totalViolations'] = total_violations               
                 incident['violations'] = raw_events
 
                 #print(incident)
-                incident_row = {
+                incident_row =  {
                     "name": incident_name,
-                    "type": "securonix",
                     "occurred_at": timestamp_to_datestring(incident.get("lastUpdateDate")),
+                    "severity": incident.get("priority"),
                     "rawJSON": json.dumps(incident),
+                    "source_id": incident_id,
+                    "raw_logs": json.dumps(raw_events),
+                    "ai_message": "test",
+                    "instance_name": "Astra-Securonix",
+                    "tenant_id": "d1708ffc-397e-43b6-8f0a-49306dcfc35d",
+                    "tenant_name": "Astra",
+                    "classifier": "test",
+                    "mapper": "test",
+                    "type": "securonix",
+                    "alert_source": "/assets/images/brand-logos/securonix-logo.png",
                 }
-                
                 print(incident_row)
                 
                 insert_incident_row_in_supabase(incident=incident_row)
@@ -3439,6 +3468,7 @@ def get_supabase_params(integration_id: int) -> dict:
         
         # Extract configuration from the JSON column
         configuration = instance_data.get('configuration', {})
+        print(f"Configuration: {configuration}")
         
         # Map the configuration fields to the expected parameter format
         params = {
@@ -3460,9 +3490,8 @@ def get_supabase_params(integration_id: int) -> dict:
 
         # Fetch / incident behavior
         "fetch_time": "24 hour",
-        "max_fetch": 2,
+        "max_fetch": 1,
         "incident_status": "opened",
-        "status": "OPEN",
         "default_severity": "Medium",
         "close_incident": False,
 
@@ -3478,8 +3507,8 @@ def get_supabase_params(integration_id: int) -> dict:
         
     except Exception as e:
         raise RuntimeError(f"Failed to fetch parameters from Supabase: {str(e)}") from e
-
-@task(log_prints=True)    
+    
+@task(log_prints=True)
 def get_last_run_from_supabase(integration_id: int) -> int:
     """
     Fetch the last_run from Supabase integration_instances table
@@ -3539,8 +3568,8 @@ def update_last_run_in_supabase(integration_id: int, last_run: dict) -> None:
             
     except Exception as e:
         print(f"Error updating last_run in Supabase: {str(e)}")
-
-@task(log_prints=True)        
+        
+@task(log_prints=True)
 def insert_incident_row_in_supabase(incident: dict) -> None:
     """
     Insert a single incident row into a Supabase table.
@@ -3608,6 +3637,7 @@ def main(integration_id: int = None, command: str = None) -> None:
 
     username = params.get("username")
     password = params.get("password")
+    print(f"Password: {password}")
     verify = not params.get("unsecure", False)
     proxy = params.get("proxy")
     # Updating TOTAL_RETRY_COUNT to get user provided value
