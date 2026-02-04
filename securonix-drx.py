@@ -3377,7 +3377,7 @@ def fetch_securonix_incident(
                 demisto_incidents.append(
                     {
                         "name": incident_name,
-                        "occurred": timestamp_to_datestring(incident.get("lastUpdateDate")),
+                        "occurred": timestamp_to_datestring(incident.get("casecreatetime")),
                         "severity": incident.get("priority"),
                         "rawJSON": json.dumps(incident),
                     }
