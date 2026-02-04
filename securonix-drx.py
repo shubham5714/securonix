@@ -3183,6 +3183,11 @@ def run_polling_command(client, args: dict, command_name: str, search_function: 
     retry_delay: int = client.get_securonix_retry_delay()
 
     if len(outputs) == 0 and retry_count > 0:
+        print(
+            f"[Retry] No events returned for '{command_name}'. "
+            f"Will retry {retry_count} time(s) after {retry_delay} seconds "
+            f"(delay type: {delay_type}). Args: {args}"
+        )
         if delay_type == "Exponential":
             retry_delay = client.get_securonix_retry_delay() * 2
         retry_timeout: int = retry_delay * retry_count + retry_count * 1
