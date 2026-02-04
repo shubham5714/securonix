@@ -18,13 +18,7 @@ import requests
 from requests.adapters import HTTPAdapter
 import sys
 import traceback
-# Supabase imports
-try:
-    from supabase import create_client, Client
-    SUPABASE_AVAILABLE = True
-except ImportError:
-    SUPABASE_AVAILABLE = False
-    print("Warning: Supabase client not available. Install with: pip install supabase")
+from supabase import create_client, Client
 
 # Supabase configuration
 SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://zhhsijigoupqroztdrdy.supabase.co')
