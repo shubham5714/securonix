@@ -2012,6 +2012,7 @@ class Client(BaseClient):
                 params["query"] = f"{params['query']} AND {query}"
 
         remove_nulls_from_dictionary(params)
+        print(params)
         violation_data = self.http_request("GET", "/spotter/index/search", headers={"token": self._token}, params=params)
         return violation_data
 
