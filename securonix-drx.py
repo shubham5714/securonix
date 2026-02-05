@@ -2010,9 +2010,9 @@ class Client(BaseClient):
                 params["query"] = query
             else:
                 params["query"] = f"{params['query']} AND {query}"
-
+        print(f"before_remove_nulls: {params}")
         remove_nulls_from_dictionary(params)
-        print(params)
+        print(f"after_remove_nulls: {params}")
         violation_data = self.http_request("GET", "/spotter/index/search", headers={"token": self._token}, params=params)
         return violation_data
 
@@ -3107,6 +3107,7 @@ def list_violation_data(client: Client, args) -> list:
     from_ = args.get("from", "").strip()
     to_ = args.get("to", "").strip()
     query = escape_spotter_query(args.get("query", "").strip())
+    print(f"escaped_query: {query}")
     query_id = args.get("query_id", "").strip()
     max_violations = arg_to_number(args.get("max", "1000"))
 
@@ -3326,7 +3327,7 @@ def fetch_securonix_incident(
                 
                 violation_query = incident.get("solrquery")
                 from_time, to_time = extract_time_range(violation_query)
-                print(violation_query)
+                print(f"solrquery: {violation_query}")
                 print(from_time)
                 print(to_time)
                 
