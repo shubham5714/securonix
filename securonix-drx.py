@@ -55,7 +55,7 @@ VALID_ENTITY_TYPE = ["Users", "Activityaccount", "Resources", "Activityip"]
 VALID_WHITELIST_TYPE = ["Global", "Attribute"]
 
 # Special characters for spotter query
-SPOTTER_SPECIAL_CHARACTERS = ["\\", "*", "?"]
+SPOTTER_SPECIAL_CHARACTERS = ["*", "?"]
 
 # Markdown characters.
 MARKDOWN_CHARS = r"\*_{}[]()#+-!"
