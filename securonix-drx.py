@@ -3555,8 +3555,8 @@ def get_last_run_from_supabase(integration_id: int) -> int:
 
     except Exception as e:
         print(f"Error fetching last_run from Supabase: {str(e)}")
-        print("Using default last_run")
-        return {}
+        print("Stopping execution due to Supabase fetch failure")
+        raise
 
 @task(log_prints=True)
 def update_last_run_in_supabase(integration_id: int, last_run: dict) -> None:
