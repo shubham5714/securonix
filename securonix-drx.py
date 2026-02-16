@@ -3069,8 +3069,8 @@ def get_incident_name(incident: dict, incident_id: str, violator_id: str) -> str
                 if reason.startswith("Policy: "):
                     incident_reason += f"{reason[8:]}, "
         if incident_reason:
-            # Remove ", " last chars and concatenate with the incident ID
-            incident_name = f"{incident_reason[:-2]}: {incident_id}"
+            # Remove ", " last chars
+            incident_name = f"{incident_reason[:-2]}"
         else:
             incident_name = f"Securonix Incident {incident_id}, Violator ID: {violator_id}"
     except ValueError:
@@ -3476,7 +3476,7 @@ def get_supabase_params(integration_id: int) -> dict:
         
         # Fetch integration instance data
         print(f"Querying Supabase for integration_id: {integration_id}")
-        response = supabase.table('integration_instances').select('*').eq('integration_id', integration_id).execute()
+        response = supabase.table('integration_instances').select('*').eq('id', integration_id).execute()
         print(f"Supabase response: {len(response.data) if response.data else 0} records found")
         
         if not response.data:
