@@ -3361,14 +3361,25 @@ def fetch_securonix_incident(
                 incident['violations'] = raw_events
 
                 #print(incident)
+                # Get first event from raw_events if available
+                first_event = raw_events[0] if raw_events and len(raw_events) > 0 else None
+                
+                # Create ai_message JSON
+                ai_message_data = {
+                    "name": incident_name,
+                    "severity": incident.get("priority"),
+                    "occurred_at": timestamp_to_datestring(incident.get("lastUpdateDate")),
+                    "violations": first_event
+                }
+                
                 incident_row =  {
                     "name": incident_name,
-                    "occurred_at": timestamp_to_datestring(incident.get("lastUpdateDate")),
+                    "occurred_at": timestamp_to_datestring(incident.get("casecreatetime")),
                     "severity": incident.get("priority"),
                     "rawJSON": json.dumps(incident),
                     "source_id": incident_id,
                     "raw_logs": json.dumps(raw_events),
-                    "ai_message": "test",
+                    "ai_message": json.dumps(ai_message_data),
                     "instance_name": "Astra-Securonix",
                     "tenant_id": "d1708ffc-397e-43b6-8f0a-49306dcfc35d",
                     "tenant_name": "Astra",
@@ -3386,7 +3397,6 @@ def fetch_securonix_incident(
                         "name": incident_name,
                         "occurred": timestamp_to_datestring(incident.get("casecreatetime")),
                         "severity": incident.get("priority"),
-                        "rawJSON": json.dumps(incident),
                     }
                 )
 
