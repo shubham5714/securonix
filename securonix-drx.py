@@ -3349,6 +3349,8 @@ def fetch_securonix_incident(
                 # Check if events[0] is a dictionary (has data) or a string (no events)
                 if isinstance(events[0], dict) and 'outputs' in events[0]:
                     raw_events = events[0]['outputs']
+                    # Extract only Rawevent field from each event
+                    raw_events = [event.get('Rawevent') for event in raw_events if isinstance(event, dict) and 'Rawevent' in event]
                     #print(raw_events)
                     total_violations = events[0]['raw_response'].get('totalDocuments', 0)
                     #print(total_violations)
@@ -3362,7 +3364,7 @@ def fetch_securonix_incident(
 
                 #print(incident)
                 # Get first event from raw_events if available
-                first_event = raw_events[0].get('Rawevent') if raw_events and len(raw_events) > 0 and isinstance(raw_events[0], dict) else None
+                first_event = raw_events[0] if raw_events and len(raw_events) > 0 else None
 
                 # Create ai_message JSON
                 ai_message_data = {
