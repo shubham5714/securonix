@@ -3345,6 +3345,7 @@ def fetch_securonix_incident(
                     search_function=list_violation_data,
                     command_name="securonix-list-violation-data",
                 )
+                print(events)
                 
                 # Check if events[0] is a dictionary (has data) or a string (no events)
                 if isinstance(events[0], dict) and 'outputs' in events[0]:
@@ -3363,7 +3364,6 @@ def fetch_securonix_incident(
                 #print(incident)
                 # Get first event from raw_events if available
                 first_event = raw_events[0] if raw_events and len(raw_events) > 0 else None
-                
                 # Create ai_message JSON
                 ai_message_data = {
                     "name": incident_name,
