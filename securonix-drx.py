@@ -3348,12 +3348,7 @@ def fetch_securonix_incident(
                 
                 # Check if events[0] is a dictionary (has data) or a string (no events)
                 if isinstance(events[0], dict) and 'outputs' in events[0]:
-                    # Extract only the 'rawevent' field from each event in outputs
-                    outputs = events[0]['outputs']
-                    raw_events = [
-                        event.get('rawevent') for event in outputs 
-                        if isinstance(event, dict) and 'rawevent' in event
-                    ]
+                    raw_events = events[0]['outputs']
                     #print(raw_events)
                     total_violations = events[0]['raw_response'].get('totalDocuments', 0)
                     #print(total_violations)
