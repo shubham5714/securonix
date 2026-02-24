@@ -3510,7 +3510,7 @@ def get_supabase_params(integration_id: int) -> dict:
         "securonix_retry_delay": 60,
 
         # Fetch / incident behavior
-        "fetch_time": "48 hour",
+        "fetch_time": "24 hour",
         "max_fetch": 5,
         "incident_status": "opened",
         "default_severity": "Medium",
